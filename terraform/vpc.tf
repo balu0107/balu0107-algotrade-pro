@@ -42,8 +42,8 @@ resource "aws_route_table_association" "public" {
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
   route {
-    cidr_block           = "0.0.0.0/0"
-    network_interface_id = aws_instance.nat_instance.primary_network_interface_id
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
   }
   tags = { Name = "corp-private-rt" }
 }
@@ -51,27 +51,6 @@ resource "aws_route_table" "private" {
 resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private.id
   route_table_id = aws_route_table.private.id
-}
-
-resource "aws_security_group" "nat_sg" {
-  name        = "corp-nat-sg"
-  description = "NAT security group"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["10.0.2.0/24"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = { Name = "corp-nat-sg" }
 }
 
 resource "aws_security_group" "k8s_cluster_sg" {
@@ -89,6 +68,13 @@ resource "aws_security_group" "k8s_cluster_sg" {
   ingress {
     from_port   = 6443
     to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

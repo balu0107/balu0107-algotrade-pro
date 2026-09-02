@@ -11,29 +11,13 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"]
 }
 
-resource "aws_instance" "nat_instance" {
-  ami               = data.aws_ami.ubuntu.id
-  instance_type     = "t3.micro"
-  subnet_id         = aws_subnet.public.id
-  security_groups   = [aws_security_group.nat_sg.id]
-  key_name          = var.key_name
-  source_dest_check = false
-
-  user_data = <<-EOF
-              #!/bin/bash
-              sysctl -w net.ipv4.ip_forward=1
-              iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-              EOF
-
-  tags = { Name = "corp-nat-instance" }
-}
-
 resource "aws_instance" "k8s_master" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.master_instance_type
-  subnet_id              = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.k8s_cluster_sg.id]
-  key_name               = var.key_name
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.master_instance_type
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = true
 
   root_block_device {
     volume_size           = 25
