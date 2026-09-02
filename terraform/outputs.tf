@@ -1,5 +1,5 @@
 output "k8s_master_public_ip" {
-  description = "Public IP address of the Kubernetes Master Node"
+  description = "Public IP address of the single Kubernetes Master Node"
   value       = aws_instance.k8s_master.public_ip
 }
 
