@@ -8,13 +8,22 @@ on:
       - 'terraform/**'
       - 'bootstrap/**'
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Select Terraform Action'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
 
 permissions:
   contents: read
 
 jobs:
   terraform-deploy:
-    name: "Provision AWS Infrastructure"
+    name: "Provision or Destroy AWS Infrastructure"
     runs-on: ubuntu-latest
 
     steps:
@@ -37,10 +46,18 @@ jobs:
         working-directory: ./bootstrap
         run: |
           terraform init
-          terraform apply -auto-approve
+          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy -auto-approve || true
+          else
+            terraform apply -auto-approve
+          fi
 
       - name: Run Main Infrastructure (VPC, Subnets & K8s Cluster)
         working-directory: ./terraform
         run: |
           terraform init
-          terraform apply -auto-approve
+          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy -auto-approve
+          else
+            terraform apply -auto-approve
+          fi
