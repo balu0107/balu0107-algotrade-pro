@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+:root {
+  --background: #020617;
+  --foreground: #ededed;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: "Courier New", monospace;
+
+  /* App theme tokens - dark is the default look (matches the original design) */
+  --surface-0: #020617; /* page background - slate-950 */
+  --surface-1: #0f172a; /* card background - slate-900 */
+  --surface-2: #1e293b; /* nested/input background - slate-800 */
+  --surface-3: #334155; /* hover-lightened surface - slate-700 */
+  --border: #1e293b; /* slate-800 */
+  --border-strong: #334155; /* slate-700 */
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --text-muted: #94a3b8; /* slate-400 */
+  --text-faint: #64748b; /* slate-500 */
+
+  /* Warning/amber tokens - raw text-amber-300/400 reads fine on dark surfaces
+     but is nearly invisible on light ones, so route every warning color
+     through here instead of a literal Tailwind amber-* class. */
+  --warning-text: #fcd34d; /* amber-300 */
+  --warning-text-soft: #fde68a; /* amber-200 */
+  --warning-wash: rgba(245, 158, 11, 0.1); /* amber-500/10 */
+  --warning-wash-strong: rgba(245, 158, 11, 0.2); /* amber-500/20 */
+  --warning-surface: rgba(120, 53, 15, 0.25); /* amber-950/20 */
+  --warning-border: rgba(245, 158, 11, 0.4); /* amber-500/40 */
+  --warning-border-strong: rgba(245, 158, 11, 0.6); /* amber-500/60 */
+}
+
+[data-theme="light"] {
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+
+  --surface-0: #f1f5f9; /* slate-100 */
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc; /* slate-50 */
+  --surface-3: #e2e8f0; /* slate-200 */
+  --border: #e2e8f0; /* slate-200 */
+  --border-strong: #cbd5e1; /* slate-300 */
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #334155; /* slate-700 */
+  --text-muted: #475569; /* slate-600 */
+  --text-faint: #64748b; /* slate-500 */
+
+  --warning-text: #92400e; /* amber-800 - dark enough to read on white */
+  --warning-text-soft: #78350f; /* amber-900 */
+  --warning-wash: #fef3c7; /* amber-100, solid (a 10% amber tint barely shows on white) */
+  --warning-wash-strong: #fde68a; /* amber-200 */
+  --warning-surface: #fef3c7; /* amber-100 */
+  --warning-border: #f59e0b; /* amber-500 */
+  --warning-border-strong: #d97706; /* amber-600 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Chrome-tab-style horizontal strips (main nav, sector/group sub-tabs): still
+   scrollable by drag/wheel when they overflow, just without the visible
+   scrollbar track - a permanently-visible drag bar under a tab row looks like
+   a broken layout, not a tab strip. */
+.tab-strip {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tab-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sub-tab strips (sectors, groups) get a real, always-visible scrollbar as a
+   manual fallback for whenever a user doesn't want to rely on the tabs
+   auto-scrolling into view - thin and theme-aware, not the OS-default bar. */
+.sub-tab-strip {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.sub-tab-strip::-webkit-scrollbar {
+  height: 6px;
+}
+.sub-tab-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sub-tab-strip::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 999px;
+}

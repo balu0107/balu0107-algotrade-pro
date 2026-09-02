@@ -1,0 +1,46 @@
+name: "Enterprise Terraform GitOps Pipeline"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'bootstrap/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-deploy:
+    name: "Provision AWS Infrastructure"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Run Bootstrap (S3 & DynamoDB)
+        working-directory: ./bootstrap
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Run Main Infrastructure (VPC, Subnets & K8s Cluster)
+        working-directory: ./terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve
