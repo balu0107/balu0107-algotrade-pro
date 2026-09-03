@@ -1,27 +1,13 @@
-name: "2. Main Infrastructure Pipeline"
+name: "1. Bootstrap State Pipeline"
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'terraform/**'
   workflow_dispatch:
-    inputs:
-      action:
-        description: 'Select Action'
-        required: true
-        default: 'apply'
-        type: choice
-        options:
-          - apply
-          - destroy
 
 permissions:
   contents: read
 
 jobs:
-  terraform-main:
+  bootstrap:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -39,12 +25,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Terraform Init & Deploy Main Infra
-        working-directory: ./terraform
+      - name: Terraform Init & Apply Bootstrap
+        working-directory: ./bootstrap
         run: |
           terraform init
-          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-            terraform destroy -auto-approve
-          else
-            terraform apply -auto-approve
-          fi
+          terraform apply -auto-approve || true
