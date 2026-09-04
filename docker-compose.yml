@@ -1,0 +1,35 @@
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: stock-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: superuser
+      POSTGRES_DB: stockdemo
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    image: maruvadabalu/algotrade-pro:backend-latest
+    container_name: stock-backend
+    ports:
+      - "9999:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:superuser@db:5432/stockdemo
+    depends_on:
+      - db
+
+  frontend:
+    image: maruvadabalu/algotrade-pro:frontend-latest
+    container_name: stock-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
