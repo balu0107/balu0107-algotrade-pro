@@ -59,3 +59,8 @@ resource "aws_instance" "k8s_worker_2" {
 
   tags = { Name = "corp-k8s-worker-node-2" }
 }
+
+resource "aws_key_pair" "generated_key" {
+  key_name   = var.key_name
+  public_key = file("${path.module}/my-k8s-key.pub")
+}

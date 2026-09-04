@@ -42,6 +42,34 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
+      - name: Run Ansible Configuration
+        if: github.event.inputs.action == 'apply'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y ansible
+          
+          cd terraform
+          MASTER_IP=$(terraform output -raw master_public_ip)
+          WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
+          cd ..
+
+          echo "$SSH_PRIVATE_KEY" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+          mkdir -p ansible
+          cat <<EOF > ansible/inventory.ini
+          [master]
+          $MASTER_IP ansible_user=ubuntu ansible_ssh_private_key_file=../ec2_key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+          [workers]
+          EOF
+          for ip in $WORKER_IPS; do
+            echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=../ec2_key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> ansible/inventory.ini
+          done
+
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
         run: terraform destroy -auto-approve
