@@ -21,21 +21,34 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Generate Version Tags
+        id: vars
+        run: |
+          echo "BUILD_DATE=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: false
-          tags: maruvadabalu/algotrade-pro:backend-${{ github.sha }}
+          tags: maruvadabalu/algotrade-pro:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'maruvadabalu/algotrade-pro:backend-${{ github.sha }}'
+          image-ref: 'maruvadabalu/algotrade-pro:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
           format: 'table'
+          output: 'backend-trivy-report.txt'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-vulnerability-report
+          path: backend-trivy-report.txt
 
       - name: Push Docker Image
         uses: docker/build-push-action@v5
@@ -43,7 +56,7 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            maruvadabalu/algotrade-pro:backend-${{ github.sha }}
+            maruvadabalu/algotrade-pro:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
             maruvadabalu/algotrade-pro:backend-latest
 
   build-frontend:
@@ -62,21 +75,34 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Generate Version Tags
+        id: vars
+        run: |
+          echo "BUILD_DATE=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: false
-          tags: maruvadabalu/algotrade-pro:frontend-${{ github.sha }}
+          tags: maruvadabalu/algotrade-pro:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'maruvadabalu/algotrade-pro:frontend-${{ github.sha }}'
+          image-ref: 'maruvadabalu/algotrade-pro:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
           format: 'table'
+          output: 'frontend-trivy-report.txt'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-vulnerability-report
+          path: frontend-trivy-report.txt
 
       - name: Push Docker Image
         uses: docker/build-push-action@v5
@@ -84,7 +110,7 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            maruvadabalu/algotrade-pro:frontend-${{ github.sha }}
+            maruvadabalu/algotrade-pro:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
             maruvadabalu/algotrade-pro:frontend-latest
 
   build-bot:
@@ -103,21 +129,34 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Generate Version Tags
+        id: vars
+        run: |
+          echo "BUILD_DATE=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ./bot
           push: false
-          tags: maruvadabalu/algotrade-pro:bot-${{ github.sha }}
+          tags: maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'maruvadabalu/algotrade-pro:bot-${{ github.sha }}'
+          image-ref: 'maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
           format: 'table'
+          output: 'bot-trivy-report.txt'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-vulnerability-report
+          path: bot-trivy-report.txt
 
       - name: Push Docker Image
         uses: docker/build-push-action@v5
@@ -125,5 +164,5 @@ jobs:
           context: ./bot
           push: true
           tags: |
-            maruvadabalu/algotrade-pro:bot-${{ github.sha }}
+            maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
             maruvadabalu/algotrade-pro:bot-latest
