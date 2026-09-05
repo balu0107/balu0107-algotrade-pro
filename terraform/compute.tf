@@ -29,11 +29,12 @@ resource "aws_instance" "k8s_master" {
 }
 
 resource "aws_instance" "k8s_worker_1" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.worker_instance_type
-  subnet_id              = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.k8s_cluster_sg.id]
-  key_name               = var.key_name
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.worker_instance_type
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = true
 
   root_block_device {
     volume_size           = 20
@@ -45,11 +46,12 @@ resource "aws_instance" "k8s_worker_1" {
 }
 
 resource "aws_instance" "k8s_worker_2" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.worker_instance_type
-  subnet_id              = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.k8s_cluster_sg.id]
-  key_name               = var.key_name
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.worker_instance_type
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = true
 
   root_block_device {
     volume_size           = 20
