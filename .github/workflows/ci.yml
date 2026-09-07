@@ -166,3 +166,26 @@ jobs:
           tags: |
             maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
             maruvadabalu/algotrade-pro:bot-latest
+
+  deploy-cd:
+    needs: [build-backend, build-frontend, build-bot]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Authenticate to Kubernetes Cluster
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Deploy Helm Chart
+        run: |
+          helm upgrade --install algotrade-release ./algotrade-chart \
+            --set backend.image.tag=latest \
+            --set frontend.image.tag=latest \
+            --set bot.image.tag=latest
