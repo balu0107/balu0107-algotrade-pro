@@ -39,6 +39,8 @@ jobs:
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
@@ -72,5 +74,7 @@ jobs:
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform destroy -auto-approve
         working-directory: ./terraform
