@@ -1,3 +1,19 @@
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] 
+}
+
 resource "aws_security_group" "k8s_cluster_sg" {
   name        = "k8s-cluster-sg"
   description = "Security group for Kubernetes cluster allowing SSH, API server, and NodePort traffic"
@@ -54,7 +70,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
 }
 
 resource "aws_instance" "k8s_master" {
-  ami                         = var.ami_id
+  ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.master_instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
@@ -67,7 +83,7 @@ resource "aws_instance" "k8s_master" {
 }
 
 resource "aws_instance" "k8s_worker_1" {
-  ami                         = var.ami_id
+  ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.worker_instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
@@ -80,7 +96,7 @@ resource "aws_instance" "k8s_worker_1" {
 }
 
 resource "aws_instance" "k8s_worker_2" {
-  ami                         = var.ami_id
+  ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.worker_instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
