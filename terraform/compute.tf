@@ -1,68 +1,54 @@
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-  owners = ["099720109477"]
-}
+resource "aws_security_group" "k8s_cluster_sg" {
+  name        = "k8s-cluster-sg"
+  description = "Security group for Kubernetes cluster allowing SSH, API server, and NodePort traffic"
+  vpc_id      = var.vpc_id
 
-resource "aws_instance" "k8s_master" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.master_instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
-  key_name                    = var.key_name
-  associate_public_ip_address = true
-
-  root_block_device {
-    volume_size           = 25
-    volume_type           = "gp3"
-    delete_on_termination = true
+  # SSH Access
+  ingress {
+    description = "Allow SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "corp-k8s-master-node" }
-}
-
-resource "aws_instance" "k8s_worker_1" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.worker_instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
-  key_name                    = var.key_name
-  associate_public_ip_address = true
-
-  root_block_device {
-    volume_size           = 20
-    volume_type           = "gp3"
-    delete_on_termination = true
+  # Kubernetes API Server
+  ingress {
+    description = "Allow Kubernetes API Server"
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "corp-k8s-worker-node-1" }
-}
-
-resource "aws_instance" "k8s_worker_2" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.worker_instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
-  key_name                    = var.key_name
-  associate_public_ip_address = true
-
-  root_block_device {
-    volume_size           = 20
-    volume_type           = "gp3"
-    delete_on_termination = true
+  # Frontend NodePort
+  ingress {
+    description = "Allow Frontend NodePort 31987"
+    from_port   = 31987
+    to_port     = 31987
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "corp-k8s-worker-node-2" }
-}
+  # Internal Cluster Traffic
+  ingress {
+    description = "Allow internal VPC traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
 
-resource "aws_key_pair" "generated_key" {
-  key_name   = var.key_name
-  public_key = file("${path.module}/my-k8s-key.pub")
+  # Outbound Access
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "k8s-cluster-sg"
+  }
 }
