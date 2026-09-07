@@ -14,7 +14,19 @@ variable "key_name" {
 }
 
 variable "vpc_id" {
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
   description = "The ID of the VPC where resources will be deployed"
+}
+
+variable "ami_id" {
+  type        = string
+  description = "The AMI ID for the EC2 instances"
+  default     = "ami-0c7217cdde317cfec"
+}
+
+variable "subnet_id" {
+  type        = string
+  description = "The Subnet ID where the EC2 instances will be launched"
+  default     = ""
 }
