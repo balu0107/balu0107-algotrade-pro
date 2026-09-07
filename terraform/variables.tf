@@ -21,8 +21,8 @@ variable "vpc_id" {
 
 variable "ami_id" {
   type        = string
-  description = "The AMI ID for the EC2 instances"
-  default     = "ami-0c7217cdde317cfec"
+  description = "The AMI ID for the EC2 instances. Leave blank to use dynamic lookup via data source."
+  default     = ""
 }
 
 variable "subnet_id" {
