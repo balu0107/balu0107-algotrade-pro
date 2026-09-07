@@ -17,7 +17,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_security_group" "k8s_cluster_sg" {
   name        = "k8s-cluster-sg"
   description = "Security group for Kubernetes cluster allowing SSH, API server, and NodePort traffic"
-  vpc_id      = var.vpc_id
+  vpc_id      = aws_vpc.main.id
 
   # SSH Access
   ingress {
@@ -72,7 +72,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
 resource "aws_instance" "k8s_master" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.master_instance_type
-  subnet_id                   = var.subnet_id
+  subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
   key_name                    = var.key_name
@@ -85,7 +85,7 @@ resource "aws_instance" "k8s_master" {
 resource "aws_instance" "k8s_worker_1" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.worker_instance_type
-  subnet_id                   = var.subnet_id
+  subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
   key_name                    = var.key_name
@@ -98,7 +98,7 @@ resource "aws_instance" "k8s_worker_1" {
 resource "aws_instance" "k8s_worker_2" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.worker_instance_type
-  subnet_id                   = var.subnet_id
+  subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
   key_name                    = var.key_name
