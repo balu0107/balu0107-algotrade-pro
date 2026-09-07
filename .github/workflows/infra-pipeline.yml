@@ -54,7 +54,7 @@ jobs:
           WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
           cd ..
 
-          echo "$SSH_PRIVATE_KEY" > ec2_key.pem
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ec2_key.pem
           chmod 600 ec2_key.pem
 
           mkdir -p ansible
