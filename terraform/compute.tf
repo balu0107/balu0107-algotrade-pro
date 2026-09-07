@@ -75,7 +75,12 @@ resource "aws_instance" "k8s_master" {
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
-  key_name                    = "devops-key"
+  
+  user_data = <<-EOF
+              #cloud-config
+              ssh_authorized_keys:
+                - ${var.ssh_public_key}
+              EOF
 
   tags = {
     Name = "k8s-master"
@@ -88,7 +93,12 @@ resource "aws_instance" "k8s_worker_1" {
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
-  key_name                    = "devops-key"
+  
+  user_data = <<-EOF
+              #cloud-config
+              ssh_authorized_keys:
+                - ${var.ssh_public_key}
+              EOF
 
   tags = {
     Name = "k8s-worker-1"
@@ -101,7 +111,12 @@ resource "aws_instance" "k8s_worker_2" {
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
-  key_name                    = "devops-key"
+  
+  user_data = <<-EOF
+              #cloud-config
+              ssh_authorized_keys:
+                - ${var.ssh_public_key}
+              EOF
 
   tags = {
     Name = "k8s-worker-2"
