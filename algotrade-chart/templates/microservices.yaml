@@ -1,0 +1,43 @@
+{{- range $key, $val := .Values }}
+{{- if and (ne $key "imagePullSecrets") (ne $key "nameOverride") (ne $key "fullnameOverride") (ne $key "serviceAccount") (ne $key "podAnnotations") (ne $key "podLabels") (ne $key "podSecurityContext") (ne $key "securityContext") (ne $key "ingress") (ne $key "resources") (ne $key "autoscaling") (ne $key "nodeSelector") (ne $key "tolerations") (ne $key "affinity") }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "algotrade-chart.fullname" $ }}-{{ $key }}
+  labels:
+    app.kubernetes.io/name: {{ $key }}
+spec:
+  replicas: {{ $val.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $key }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $key }}
+    spec:
+      containers:
+        - name: {{ $key }}
+          image: "{{ $val.image.repository }}:{{ $val.image.tag }}"
+          imagePullPolicy: {{ $val.image.pullPolicy }}
+          ports:
+            - containerPort: {{ if eq $key "backend" }}9999{{ else }}80{{ end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "algotrade-chart.fullname" $ }}-{{ $key }}
+  labels:
+    app.kubernetes.io/name: {{ $key }}
+spec:
+  type: {{ $val.service.type }}
+  ports:
+    - port: {{ $val.service.port }}
+      targetPort: {{ if eq $key "backend" }}9999{{ else }}80{{ end }}
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ $key }}
+{{- end }}
+{{- end }}
