@@ -44,17 +44,15 @@ jobs:
 
       - name: Run Ansible Configuration
         if: github.event.inputs.action == 'apply'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           sudo apt-get update && sudo apt-get install -y ansible
           
           cd terraform
           MASTER_IP=$(terraform output -raw master_public_ip)
           WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
+          terraform output -raw private_key_pem > ../ec2_key.pem
           cd ..
 
-          echo "$SSH_PRIVATE_KEY" > ec2_key.pem
           chmod 600 ec2_key.pem
 
           mkdir -p ansible
