@@ -52,3 +52,42 @@ resource "aws_security_group" "k8s_cluster_sg" {
     Name = "k8s-cluster-sg"
   }
 }
+
+resource "aws_instance" "k8s_master" {
+  ami                         = var.ami_id
+  instance_type               = var.master_instance_type
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
+  associate_public_ip_address = true
+  key_name                    = var.key_name
+
+  tags = {
+    Name = "k8s-master"
+  }
+}
+
+resource "aws_instance" "k8s_worker_1" {
+  ami                         = var.ami_id
+  instance_type               = var.worker_instance_type
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
+  associate_public_ip_address = true
+  key_name                    = var.key_name
+
+  tags = {
+    Name = "k8s-worker-1"
+  }
+}
+
+resource "aws_instance" "k8s_worker_2" {
+  ami                         = var.ami_id
+  instance_type               = var.worker_instance_type
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
+  associate_public_ip_address = true
+  key_name                    = var.key_name
+
+  tags = {
+    Name = "k8s-worker-2"
+  }
+}
