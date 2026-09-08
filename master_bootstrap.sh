@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== 0. Syncing Repository State ==="
+echo "=== 0. Syncing Repository State Safely ==="
 git fetch origin master
 git reset --hard origin/master
 
@@ -15,15 +15,18 @@ fi
 echo "=== 2. Installing/Upgrading NGINX Ingress Controller ==="
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
+# Clean up any stuck/failed release states before upgrading
+helm uninstall ingress-nginx --namespace ingress-nginx || true
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
-  --set controller.service.type=NodePort
+  --set controller.service.type=NodePort \
+  --cleanup-on-fail
 
 echo "=== 3. Installing Argo CD via Helm ==="
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-helm upgrade --install argocd argo/argo-cd --namespace argocd
+helm upgrade --install argocd argo/argo-cd --namespace argocd --cleanup-on-fail
 
 echo "=== 4. Deploying PostgreSQL Database ==="
 kubectl create namespace default --dry-run=client -o yaml | kubectl apply -f -
@@ -94,7 +97,7 @@ spec:
 EOF
 
 echo "=== 6. Extracting NGINX NodePort and Generating Access URL ==="
-sleep 10
+sleep 15
 
 NGINX_PORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
 MASTER_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || hostname -I | awk '{print $1}')
