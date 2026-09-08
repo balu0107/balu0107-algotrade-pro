@@ -231,7 +231,7 @@ jobs:
         with:
           host: ${{ needs.get-master-ip.outputs.master_ip }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             git pull origin main || true
             chmod +x master_bootstrap.sh
