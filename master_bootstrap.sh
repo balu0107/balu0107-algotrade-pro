@@ -11,11 +11,13 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
   --set controller.service.type=NodePort
 
-echo "=== 3. Installing Argo CD ==="
+echo "=== 3. Installing Argo CD via Helm ==="
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+helm upgrade --install argocd argo/argo-cd --namespace argocd
 
-echo "=== 4. Deploying PostgreSQL 18 Database ==="
+echo "=== 4. Deploying PostgreSQL Database ==="
 kubectl create namespace default --dry-run=client -o yaml | kubectl apply -f -
 
 cat <<EOF | kubectl apply -f -
