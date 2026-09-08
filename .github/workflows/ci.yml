@@ -212,6 +212,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            if [ ! -d "balu0107-algotrade-pro" ]; then
+              git clone https://github.com/balu0107/balu0107-algotrade-pro.git
+            fi
+            cd balu0107-algotrade-pro
             git pull origin master || true
             chmod +x master_bootstrap.sh
             ./master_bootstrap.sh
