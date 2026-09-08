@@ -15,7 +15,6 @@ fi
 echo "=== 2. Installing/Upgrading NGINX Ingress Controller ==="
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-# Clean up any stuck/failed release states before upgrading
 helm uninstall ingress-nginx --namespace ingress-nginx || true
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
@@ -26,11 +25,15 @@ echo "=== 3. Installing Argo CD via Helm ==="
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 
-# Clean up cluster-scoped Argo CD CRDs and namespace left from previous manual installations
+# Purge cluster-scoped resources and namespace cleanly to prevent adoption errors
 kubectl delete crd applications.argoproj.io appprojects.argoproj.io applicationsets.argoproj.io notifications.argoproj.io --ignore-not-found=true || true
+kubectl delete clusterrole,clusterrolebinding -l app.kubernetes.io/name=argocd-application-controller --ignore-not-found=true || true
+kubectl delete clusterrole,clusterrolebinding -l app.kubernetes.io/part-of=argocd --ignore-not-found=true || true
 kubectl delete namespace argocd --ignore-not-found=true
-echo "Waiting for namespace and CRD cleanup..."
+
+echo "Waiting for full cluster resource cleanup..."
 sleep 5
+
 kubectl create namespace argocd
 helm upgrade --install argocd argo/argo-cd --namespace argocd --cleanup-on-fail
 
