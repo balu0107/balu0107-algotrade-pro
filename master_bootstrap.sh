@@ -25,9 +25,11 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 echo "=== 3. Installing Argo CD via Helm ==="
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-# Completely purge old mixed kubectl/helm resources in the argocd namespace
+
+# Clean up cluster-scoped Argo CD CRDs and namespace left from previous manual installations
+kubectl delete crd applications.argoproj.io appprojects.argoproj.io applicationsets.argoproj.io notifications.argoproj.io --ignore-not-found=true || true
 kubectl delete namespace argocd --ignore-not-found=true
-echo "Waiting for namespace cleanup..."
+echo "Waiting for namespace and CRD cleanup..."
 sleep 5
 kubectl create namespace argocd
 helm upgrade --install argocd argo/argo-cd --namespace argocd --cleanup-on-fail
