@@ -191,38 +191,8 @@ jobs:
           git commit -m "chore: update helm chart tags to $BUILD_DATE-$SHORT_SHA [skip ci]" || echo "No changes to commit"
           git push || echo "Push skipped or handled"
 
-  get-master-ip:
-    needs: update-helm-manifests
-    runs-on: ubuntu-latest
-    outputs:
-      master_ip: ${{ steps.tf-output.outputs.master_ip }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
-
-      - name: Get Master IP from Terraform
-        id: tf-output
-        run: |
-          IP=$(terraform output -raw master_public_ip)
-          echo "Extracted Master IP: $IP"
-          echo "master_ip=$IP" >> $GITHUB_OUTPUT
-
   deploy-to-master:
-    needs: [update-helm-manifests, get-master-ip]
+    needs: update-helm-manifests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -231,7 +201,7 @@ jobs:
       - name: Execute Master Bootstrap on EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ needs.get-master-ip.outputs.master_ip }}
+          host: ${{ vars.MASTER_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
