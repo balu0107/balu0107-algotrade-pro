@@ -6,7 +6,7 @@ backend:
   image:
     repository: maruvadabalu/algotrade-pro-backend
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "backend-2026.09.08-0400964"
   service:
     type: ClusterIP
     port: 9999
@@ -16,7 +16,7 @@ frontend:
   image:
     repository: maruvadabalu/algotrade-pro-frontend
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "frontend-2026.09.08-0400964"
   service:
     type: ClusterIP
     port: 80
@@ -26,7 +26,7 @@ bot:
   image:
     repository: maruvadabalu/algotrade-pro-bot
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "bot-2026.09.08-0400964"
   service:
     type: ClusterIP
     port: 8080
