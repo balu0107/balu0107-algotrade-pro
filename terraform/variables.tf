@@ -8,12 +8,7 @@ variable "worker_instance_type" {
   default = "t3.micro"
 }
 
-variable "key_name" {
-  type    = string
-  default = "devops-key"
-}
-
 variable "ssh_public_key" {
-  description = "The public SSH key to inject into instances"
+  description = "Injected transient public key"
   type        = string
 }

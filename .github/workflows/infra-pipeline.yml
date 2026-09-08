@@ -33,21 +33,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      - name: Generate Transient SSH Key
+        run: |
+          ssh-keygen -t rsa -b 4096 -f ./temp_id_rsa -N ""
+          echo "TF_VAR_ssh_public_key=$(cat ./temp_id_rsa.pub)" >> $GITHUB_ENV
+
       - name: Terraform Init
         run: terraform init -reconfigure
         working-directory: ./terraform
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        env:
-          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
       - name: Run Ansible Configuration
         if: github.event.inputs.action == 'apply'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           sudo apt-get update && sudo apt-get install -y ansible
           
@@ -56,25 +57,22 @@ jobs:
           WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
           cd ..
 
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ec2_key.pem
-          chmod 600 ec2_key.pem
+          chmod 600 ./temp_id_rsa
 
           mkdir -p ansible
           cat <<EOF > ansible/inventory.ini
           [master]
-          $MASTER_IP ansible_user=ubuntu ansible_ssh_private_key_file=./ec2_key.pem ansible_ssh_common_args='-o IdentitiesOnly=yes -o StrictHostKeyChecking=no'
+          $MASTER_IP ansible_user=ubuntu ansible_ssh_private_key_file=./temp_id_rsa ansible_ssh_common_args='-o IdentitiesOnly=yes -o StrictHostKeyChecking=no'
 
           [workers]
           EOF
           for ip in $WORKER_IPS; do
-            echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=./ec2_key.pem ansible_ssh_common_args='-o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
+            echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=./temp_id_rsa ansible_ssh_common_args='-o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
           done
 
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        env:
-          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform destroy -auto-approve
         working-directory: ./terraform

@@ -16,10 +16,9 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_security_group" "k8s_cluster_sg" {
   name        = "k8s-cluster-sg"
-  description = "Security group for Kubernetes cluster allowing SSH, API server, and NodePort traffic"
+  description = "Security group for Kubernetes cluster"
   vpc_id      = aws_vpc.main.id
 
-  # SSH Access
   ingress {
     description = "Allow SSH"
     from_port   = 22
@@ -28,7 +27,6 @@ resource "aws_security_group" "k8s_cluster_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Kubernetes API Server
   ingress {
     description = "Allow Kubernetes API Server"
     from_port   = 6443
@@ -37,7 +35,6 @@ resource "aws_security_group" "k8s_cluster_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Frontend NodePort
   ingress {
     description = "Allow Frontend NodePort 31987"
     from_port   = 31987
@@ -46,7 +43,6 @@ resource "aws_security_group" "k8s_cluster_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Internal Cluster Traffic
   ingress {
     description = "Allow internal VPC traffic"
     from_port   = 0
@@ -55,7 +51,6 @@ resource "aws_security_group" "k8s_cluster_sg" {
     cidr_blocks = ["10.0.0.0/16"]
   }
 
-  # Outbound Access
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
