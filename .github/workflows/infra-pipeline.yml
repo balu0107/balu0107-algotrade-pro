@@ -44,6 +44,30 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: ./terraform
 
+      - name: Wait for Cloud-Init and SSH Readiness
+        if: github.event.inputs.action == 'apply'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+          cd terraform
+          MASTER_IP=$(terraform output -raw master_public_ip)
+          WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
+          cd ..
+
+          ALL_IPS="$MASTER_IP $WORKER_IPS"
+
+          echo "Waiting for instances to accept SSH connections..."
+          for ip in $ALL_IPS; do
+            echo "Checking $ip..."
+            until ssh -i ec2_key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$ip "echo 'Ready'"; do
+              sleep 5
+            done
+          done
+          echo "All instances are online and ready!"
+
       - name: Run Ansible Configuration
         if: github.event.inputs.action == 'apply'
         env:
