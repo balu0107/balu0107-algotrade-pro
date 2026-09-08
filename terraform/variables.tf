@@ -9,6 +9,6 @@ variable "worker_instance_type" {
 }
 
 variable "ssh_public_key" {
-  description = "Injected transient public key"
+  description = "The public SSH key injected into EC2 instances via user_data"
   type        = string
 }
