@@ -189,12 +189,13 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add algotrade-chart/values.yaml
           git commit -m "chore: update helm chart tags to $BUILD_DATE-$SHORT_SHA [skip ci]" || echo "No changes to commit"
-          git push
+          git push || echo "Push skipped or handled"
 
   get-master-ip:
+    needs: update-helm-manifests
     runs-on: ubuntu-latest
     outputs:
-      master_ip: ${{ steps.tf-output.outputs.ip }}
+      master_ip: ${{ steps.tf-output.outputs.master_ip }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -217,7 +218,8 @@ jobs:
         id: tf-output
         run: |
           IP=$(terraform output -raw master_public_ip)
-          echo "ip=$IP" >> $GITHUB_OUTPUT
+          echo "Extracted Master IP: $IP"
+          echo "master_ip=$IP" >> $GITHUB_OUTPUT
 
   deploy-to-master:
     needs: [update-helm-manifests, get-master-ip]
@@ -233,7 +235,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            git pull origin main || true
+            git pull origin master || true
             chmod +x master_bootstrap.sh
             ./master_bootstrap.sh
             cat /var/log/algotrade/access-url.log
