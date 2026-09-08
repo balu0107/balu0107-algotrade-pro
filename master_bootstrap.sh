@@ -1,13 +1,21 @@
 #!/bin/bash
 set -e
 
-echo "=== 1. Installing Helm ==="
-curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+echo "=== 0. Syncing Repository State ==="
+git reset --hard HEAD
+git pull origin master
 
-echo "=== 2. Installing NGINX Ingress Controller ==="
+echo "=== 1. Installing Helm ==="
+if ! command -v helm &> /dev/null; then
+  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+else
+  echo "Helm is already installed."
+fi
+
+echo "=== 2. Installing/Upgrading NGINX Ingress Controller ==="
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-helm install ingress-nginx ingress-nginx/ingress-nginx \
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
   --set controller.service.type=NodePort
 
@@ -86,15 +94,10 @@ spec:
 EOF
 
 echo "=== 6. Extracting NGINX NodePort and Generating Access URL ==="
-# Wait briefly for the service to be allocated
 sleep 10
 
-# Extract the dynamic NodePort allocated to the NGINX ingress controller
 NGINX_PORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
-
-# Fetch the public IP of the master node dynamically from AWS metadata service
 MASTER_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || hostname -I | awk '{print $1}')
-
 ACCESS_URL="http://${MASTER_IP}:${NGINX_PORT}"
 
 echo "============================================================"
@@ -103,9 +106,7 @@ echo " Master Node Public IP: ${MASTER_IP}"
 echo " APPLICATION ACCESS URL: ${ACCESS_URL}"
 echo "============================================================"
 
-# Save the generated URL to a local log file for verification
 sudo mkdir -p /var/log/algotrade
 echo "${ACCESS_URL}" | sudo tee /var/log/algotrade/access-url.log
 
 echo "=== Master Node Bootstrap Complete! ==="
-echo "=== check url! ==="
