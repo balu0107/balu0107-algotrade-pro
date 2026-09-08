@@ -45,20 +45,21 @@ jobs:
         run: terraform apply -auto-approve -lock=false
         working-directory: ./terraform
 
-      - name: Update Master IP Variable in GitHub
+      - name: Update Master IP File and Push
         if: github.event.inputs.action == 'apply'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd terraform
           MASTER_IP=$(terraform output -raw master_public_ip)
           cd ..
           
           echo "Extracted Master IP: $MASTER_IP"
+          echo "$MASTER_IP" > master_ip.txt
           
-          # Automatically update or create the MASTER_PUBLIC_IP repository variable
-          gh variable set MASTER_PUBLIC_IP --body "$MASTER_IP"
-          echo "Successfully updated GitHub repository variable MASTER_PUBLIC_IP with $MASTER_IP"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add master_ip.txt
+          git commit -m "chore: update master public ip to $MASTER_IP [skip ci]" || echo "No changes to commit"
+          git push || echo "Push skipped"
 
       - name: Wait for Cloud-Init and SSH Readiness
         if: github.event.inputs.action == 'apply'
