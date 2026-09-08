@@ -41,7 +41,7 @@ jobs:
         if: github.event.inputs.action == 'apply'
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -lock=false
         working-directory: ./terraform
 
       - name: Wait for Cloud-Init and SSH Readiness
