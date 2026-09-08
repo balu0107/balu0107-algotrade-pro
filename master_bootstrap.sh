@@ -108,3 +108,4 @@ sudo mkdir -p /var/log/algotrade
 echo "${ACCESS_URL}" | sudo tee /var/log/algotrade/access-url.log
 
 echo "=== Master Node Bootstrap Complete! ==="
+echo "=== check url! ==="
