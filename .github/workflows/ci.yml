@@ -216,7 +216,8 @@ jobs:
               git clone https://github.com/balu0107/balu0107-algotrade-pro.git
             fi
             cd balu0107-algotrade-pro
-            git pull origin master || true
+            git fetch origin master
+            git reset --hard origin/master
             chmod +x master_bootstrap.sh
             ./master_bootstrap.sh
             cat /var/log/algotrade/access-url.log
