@@ -190,3 +190,22 @@ jobs:
           git add algotrade-chart/values.yaml
           git commit -m "chore: update helm chart tags to $BUILD_DATE-$SHORT_SHA [skip ci]" || echo "No changes to commit"
           git push
+
+  deploy-to-master:
+    needs: update-helm-manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Bootstrap on Master Node via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.MASTER_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            git pull origin main || true
+            chmod +x master_bootstrap.sh
+            ./master_bootstrap.sh
+            cat /var/log/algotrade/access-url.log

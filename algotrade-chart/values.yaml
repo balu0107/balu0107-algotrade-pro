@@ -7,6 +7,9 @@ backend:
     repository: maruvadabalu/algotrade-pro-backend
     pullPolicy: IfNotPresent
     tag: "latest"
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://postgres:superuser@db:5432/algotrade"
   service:
     type: ClusterIP
     port: 9999
