@@ -32,13 +32,13 @@ jobs:
         with:
           context: ./backend
           push: false
-          tags: maruvadabalu/algotrade-pro:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
+          tags: maruvadabalu/algotrade-pro-backend:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'maruvadabalu/algotrade-pro:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
+          image-ref: 'maruvadabalu/algotrade-pro-backend:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
           format: 'table'
           output: 'backend-trivy-report.txt'
           exit-code: '0'
@@ -56,8 +56,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            maruvadabalu/algotrade-pro:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
-            maruvadabalu/algotrade-pro:backend-latest
+            maruvadabalu/algotrade-pro-backend:backend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
+            maruvadabalu/algotrade-pro-backend:latest
 
   build-frontend:
     needs: build-backend
@@ -86,13 +86,13 @@ jobs:
         with:
           context: ./frontend
           push: false
-          tags: maruvadabalu/algotrade-pro:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
+          tags: maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'maruvadabalu/algotrade-pro:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
+          image-ref: 'maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
           format: 'table'
           output: 'frontend-trivy-report.txt'
           exit-code: '0'
@@ -110,8 +110,8 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            maruvadabalu/algotrade-pro:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
-            maruvadabalu/algotrade-pro:frontend-latest
+            maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
+            maruvadabalu/algotrade-pro-frontend:latest
 
   build-bot:
     needs: build-frontend
@@ -140,13 +140,13 @@ jobs:
         with:
           context: ./bot
           push: false
-          tags: maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
+          tags: maruvadabalu/algotrade-pro-bot:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
+          image-ref: 'maruvadabalu/algotrade-pro-bot:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}'
           format: 'table'
           output: 'bot-trivy-report.txt'
           exit-code: '0'
@@ -164,27 +164,29 @@ jobs:
           context: ./bot
           push: true
           tags: |
-            maruvadabalu/algotrade-pro:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
-            maruvadabalu/algotrade-pro:bot-latest
+            maruvadabalu/algotrade-pro-bot:bot-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
+            maruvadabalu/algotrade-pro-bot:latest
 
-  deploy-cd:
+  update-helm-manifests:
     needs: [build-backend, build-frontend, build-bot]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-
-      - name: Setup Kubeconfig File
+      - name: Update Helm Chart Values
         run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+          BUILD_DATE=$(date +'%Y.%m.%d')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          sed -i "/backend:/,/tag:/ s/tag: .*/tag: \"backend-$BUILD_DATE-$SHORT_SHA\"/" algotrade-chart/values.yaml
+          sed -i "/frontend:/,/tag:/ s/tag: .*/tag: \"frontend-$BUILD_DATE-$SHORT_SHA\"/" algotrade-chart/values.yaml
+          sed -i "/bot:/,/tag:/ s/tag: .*/tag: \"bot-$BUILD_DATE-$SHORT_SHA\"/" algotrade-chart/values.yaml
 
-      - name: Deploy Helm Chart
+      - name: Commit and Push Image Tag Updates
         run: |
-          helm upgrade --install algotrade-release ./algotrade-chart \
-            --set backend.image.tag=latest \
-            --set frontend.image.tag=latest \
-            --set bot.image.tag=latest
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add algotrade-chart/values.yaml
+          git commit -m "chore: update helm chart tags to $BUILD_DATE-$SHORT_SHA [skip ci]" || echo "No changes to commit"
+          git push
