@@ -2,8 +2,8 @@
 set -e
 
 echo "=== 0. Syncing Repository State ==="
-git reset --hard HEAD
-git pull origin master
+git fetch origin master
+git reset --hard origin/master
 
 echo "=== 1. Installing Helm ==="
 if ! command -v helm &> /dev/null; then
