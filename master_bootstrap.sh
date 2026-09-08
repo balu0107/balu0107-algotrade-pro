@@ -25,7 +25,11 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 echo "=== 3. Installing Argo CD via Helm ==="
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
-kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+# Completely purge old mixed kubectl/helm resources in the argocd namespace
+kubectl delete namespace argocd --ignore-not-found=true
+echo "Waiting for namespace cleanup..."
+sleep 5
+kubectl create namespace argocd
 helm upgrade --install argocd argo/argo-cd --namespace argocd --cleanup-on-fail
 
 echo "=== 4. Deploying PostgreSQL Database ==="
