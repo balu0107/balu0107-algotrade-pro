@@ -71,6 +71,12 @@ resource "aws_instance" "k8s_master" {
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
   
+  root_block_device {
+    volume_size           = 30
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
   user_data = <<-EOF
               #cloud-config
               ssh_authorized_keys:
@@ -89,6 +95,12 @@ resource "aws_instance" "k8s_worker_1" {
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
   
+  root_block_device {
+    volume_size           = 20
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
   user_data = <<-EOF
               #cloud-config
               ssh_authorized_keys:
@@ -107,6 +119,12 @@ resource "aws_instance" "k8s_worker_2" {
   vpc_security_group_ids      = [aws_security_group.k8s_cluster_sg.id]
   associate_public_ip_address = true
   
+  root_block_device {
+    volume_size           = 20
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
   user_data = <<-EOF
               #cloud-config
               ssh_authorized_keys:
