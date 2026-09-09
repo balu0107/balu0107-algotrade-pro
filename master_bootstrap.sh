@@ -65,7 +65,7 @@ spec:
             - name: POSTGRES_PASSWORD
               value: superuser
             - name: POSTGRES_DB
-              value: algotrade
+              value: stockdemo
           ports:
             - containerPort: 5432
               name: postgres

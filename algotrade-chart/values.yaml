@@ -9,7 +9,7 @@ backend:
     tag: "backend-2026.09.08-07a2161"
   env:
     - name: DATABASE_URL
-      value: "postgresql://postgres:superuser@db:5432/algotrade"
+      value: "postgresql://postgres:superuser@db:5432/stockdemo"
   service:
     type: ClusterIP
     port: 9999
