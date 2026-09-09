@@ -16,7 +16,7 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_security_group" "k8s_cluster_sg" {
   name        = "k8s-cluster-sg"
-  description = "Security group for Kubernetes cluster"
+  description = "Security group for Kubernetes cluster with hardcoded network loopholes closed"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -36,7 +36,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
   }
 
   ingress {
-    description = "Allow Frontend NodePort 31987"
+    description = "Allow Frontend NodePort"
     from_port   = 31987
     to_port     = 31987
     protocol    = "tcp"
@@ -44,7 +44,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
   }
 
   ingress {
-    description = "Allow Kubelet API"
+    description = "Allow Kubelet API intra-cluster communication"
     from_port   = 10250
     to_port     = 10250
     protocol    = "tcp"
@@ -52,7 +52,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
   }
 
   ingress {
-    description = "Allow Calico BGP"
+    description = "Allow Calico BGP overlay traffic"
     from_port   = 179
     to_port     = 179
     protocol    = "tcp"
@@ -60,7 +60,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
   }
 
   ingress {
-    description = "Allow Calico VXLAN"
+    description = "Allow Calico VXLAN overlay traffic"
     from_port   = 4789
     to_port     = 4789
     protocol    = "udp"
@@ -103,6 +103,8 @@ resource "aws_instance" "k8s_master" {
 
   user_data = <<-EOF
               #cloud-config
+              runcmd:
+                - [ sh, -c, "mkdir -p /var/lib/calico" ]
               ssh_authorized_keys:
                 - ${var.ssh_public_key}
               EOF
@@ -127,6 +129,8 @@ resource "aws_instance" "k8s_worker_1" {
 
   user_data = <<-EOF
               #cloud-config
+              runcmd:
+                - [ sh, -c, "rm -rf /var/lib/calico/* && mkdir -p /var/lib/calico" ]
               ssh_authorized_keys:
                 - ${var.ssh_public_key}
               EOF
@@ -151,6 +155,8 @@ resource "aws_instance" "k8s_worker_2" {
 
   user_data = <<-EOF
               #cloud-config
+              runcmd:
+                - [ sh, -c, "rm -rf /var/lib/calico/* && mkdir -p /var/lib/calico" ]
               ssh_authorized_keys:
                 - ${var.ssh_public_key}
               EOF
