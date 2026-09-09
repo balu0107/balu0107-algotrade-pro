@@ -44,6 +44,30 @@ resource "aws_security_group" "k8s_cluster_sg" {
   }
 
   ingress {
+    description = "Allow Kubelet API"
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    description = "Allow Calico BGP"
+    from_port   = 179
+    to_port     = 179
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    description = "Allow Calico VXLAN"
+    from_port   = 4789
+    to_port     = 4789
+    protocol    = "udp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
     description = "Allow internal VPC traffic"
     from_port   = 0
     to_port     = 0
