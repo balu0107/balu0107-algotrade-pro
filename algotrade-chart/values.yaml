@@ -13,6 +13,7 @@ backend:
   service:
     type: ClusterIP
     port: 9999
+    targetPort: 9999
 
 frontend:
   replicaCount: 1
@@ -23,6 +24,7 @@ frontend:
   service:
     type: ClusterIP
     port: 80
+    targetPort: 3000
 
 bot:
   replicaCount: 1
@@ -33,6 +35,7 @@ bot:
   service:
     type: ClusterIP
     port: 8080
+    targetPort: 8080
 
 imagePullSecrets: []
 nameOverride: ""

@@ -85,7 +85,7 @@ jobs:
           done
           echo "All instances are online and ready!"
 
-      - name: Run Ansible Configuration
+      - name: Run Ansible Configuration & Kubernetes Setup
         if: github.event.inputs.action == 'apply'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -110,6 +110,82 @@ jobs:
           for ip in $WORKER_IPS; do
             echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=./ec2_key.pem ansible_ssh_common_args='-o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
           done
+
+          cat << 'EOF' > ansible/playbook.yml
+          - hosts: master
+            become: yes
+            tasks:
+              - name: Initialize Kubernetes Control Plane
+                shell: kubeadm init --pod-network-cidr=192.168.0.0/16
+                args:
+                  creates: /etc/kubernetes/admin.conf
+
+              - name: Create .kube directory for ubuntu user
+                file:
+                  path: /home/ubuntu/.kube
+                  state: directory
+                  owner: ubuntu
+                  group: ubuntu
+                  mode: '0755'
+
+              - name: Copy admin.conf to ubuntu user's home
+                copy:
+                  src: /etc/kubernetes/admin.conf
+                  dest: /home/ubuntu/.kube/config
+                  remote_src: yes
+                  owner: ubuntu
+                  group: ubuntu
+                  mode: '0600'
+
+              - name: Install Calico CNI
+                become: no
+                shell: export KUBECONFIG=/home/ubuntu/.kube/config && kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+
+              - name: Generate worker join command
+                shell: kubeadm token create --print-join-command
+                register: join_command
+
+              - name: Save join command locally for workers
+                delegate_to: localhost
+                become: no
+                copy:
+                  content: "{{ join_command.stdout }}"
+                  dest: ./join_command.sh
+
+          - hosts: workers
+            become: yes
+            tasks:
+              - name: Reset existing kubeadm state if any
+                shell: kubeadm reset -f || true
+
+              - name: Remove old CNI configs
+                file:
+                  path: /etc/cni/net.d
+                  state: absent
+
+              - name: Copy join command from localhost
+                copy:
+                  src: ./join_command.sh
+                  dest: /tmp/join_command.sh
+                  mode: '0755'
+
+              - name: Execute join command on worker node
+                shell: /tmp/join_command.sh
+
+          - hosts: master
+            become: yes
+            tasks:
+              - name: Deploy NGINX Ingress Controller with Hardcoded NodePort 30080
+                become: no
+                shell: |
+                  export KUBECONFIG=/home/ubuntu/.kube/config
+                  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+                  kubectl patch svc ingress-nginx-controller -n ingress-nginx --type='json' -p='[
+                    {"op": "replace", "path": "/spec/type", "value": "NodePort"},
+                    {"op": "replace", "path": "/spec/ports/0/nodePort", "value": 30080},
+                    {"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30443}
+                  ]'
+          EOF
 
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
