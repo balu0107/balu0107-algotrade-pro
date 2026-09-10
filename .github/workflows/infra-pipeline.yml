@@ -254,20 +254,6 @@ jobs:
 
               - name: Execute join command on worker node
                 shell: /tmp/join_command.sh
-
-          - hosts: master
-            become: yes
-            tasks:
-              - name: Deploy NGINX Ingress Controller with Hardcoded NodePort 30080
-                become: no
-                shell: |
-                  export KUBECONFIG=/home/ubuntu/.kube/config
-                  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
-                  kubectl patch svc ingress-nginx-controller -n ingress-nginx --type='json' -p='[
-                    {"op": "replace", "path": "/spec/type", "value": "NodePort"},
-                    {"op": "replace", "path": "/spec/ports/0/nodePort", "value": 30080},
-                    {"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30443}
-                  ]'
           EOF
 
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
