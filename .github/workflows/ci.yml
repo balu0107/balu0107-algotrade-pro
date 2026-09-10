@@ -1,4 +1,4 @@
-name: CI Build, Scan & Push
+name: "3. CI Build, Scan & Push"
 
 on:
   push:

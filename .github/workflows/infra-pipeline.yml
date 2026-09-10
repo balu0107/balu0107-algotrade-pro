@@ -1,4 +1,4 @@
-name: Infrastructure Pipeline
+name: "2. Infrastructure Pipeline"
 
 on:
   workflow_dispatch:

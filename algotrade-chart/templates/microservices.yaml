@@ -22,7 +22,7 @@ spec:
           image: "{{ $val.image.repository }}:{{ $val.image.tag }}"
           imagePullPolicy: {{ $val.image.pullPolicy }}
           ports:
-            - containerPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else }}80{{ end }}
+            - containerPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else }}3000{{ end }}
 ---
 apiVersion: v1
 kind: Service
@@ -34,7 +34,7 @@ spec:
   type: {{ $val.service.type }}
   ports:
     - port: {{ $val.service.port }}
-      targetPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else }}80{{ end }}
+      targetPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else }}3000{{ end }}
       protocol: TCP
       name: http
   selector:
