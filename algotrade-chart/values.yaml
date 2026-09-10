@@ -56,13 +56,24 @@ securityContext: {}
 ingress:
   enabled: true
   className: "nginx"
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  annotations: {}
   hosts:
     - host: ""
       paths:
         - path: /
           pathType: Prefix
+          backend:
+            service:
+              name: algotrade-app-algotrade-chart-frontend
+              port:
+                number: 80
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
+              name: algotrade-app-algotrade-chart-backend
+              port:
+                number: 9999
   tls: []
 
 resources: {}
