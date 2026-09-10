@@ -6,7 +6,7 @@ backend:
   image:
     repository: maruvadabalu/algotrade-pro-backend
     pullPolicy: IfNotPresent
-    tag: "backend-2026.09.10-d141140"
+    tag: "backend-2026.09.10-a2c58e3"
   env:
     - name: DATABASE_URL
       value: "postgresql://postgres:superuser@db:5432/stockdemo"
@@ -20,7 +20,7 @@ frontend:
   image:
     repository: maruvadabalu/algotrade-pro-frontend
     pullPolicy: IfNotPresent
-    tag: "frontend-2026.09.10-d141140"
+    tag: "frontend-2026.09.10-a2c58e3"
   service:
     type: ClusterIP
     port: 80
@@ -31,7 +31,7 @@ bot:
   image:
     repository: maruvadabalu/algotrade-pro-bot
     pullPolicy: IfNotPresent
-    tag: "bot-2026.09.10-d141140"
+    tag: "bot-2026.09.10-a2c58e3"
   service:
     type: ClusterIP
     port: 8080
