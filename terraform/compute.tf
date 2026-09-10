@@ -16,7 +16,7 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_security_group" "k8s_cluster_sg" {
   name        = "k8s-cluster-sg"
-  description = "Security group for Kubernetes cluster with hardcoded network loopholes closed"
+  description = "Security group for Kubernetes cluster with fixed CIDRs and NodePort 30080"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -44,11 +44,19 @@ resource "aws_security_group" "k8s_cluster_sg" {
   }
 
   ingress {
+    description = "Allow Nginx NodePort"
+    from_port   = 30080
+    to_port     = 30080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     description = "Allow Kubelet API intra-cluster communication"
     from_port   = 10250
     to_port     = 10250
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = [aws_vpc.main.cidr_block]
   }
 
   ingress {
@@ -56,7 +64,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
     from_port   = 179
     to_port     = 179
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = [aws_vpc.main.cidr_block]
   }
 
   ingress {
@@ -64,7 +72,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
     from_port   = 4789
     to_port     = 4789
     protocol    = "udp"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = [aws_vpc.main.cidr_block]
   }
 
   ingress {
@@ -72,7 +80,7 @@ resource "aws_security_group" "k8s_cluster_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = [aws_vpc.main.cidr_block]
   }
 
   egress {
