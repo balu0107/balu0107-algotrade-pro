@@ -19,6 +19,8 @@ helm uninstall ingress-nginx --namespace ingress-nginx || true
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
   --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30080 \
+  --set controller.service.nodePorts.https=30443 \
   --cleanup-on-fail
 
 echo "=== 3. Installing Argo CD via Helm ==="
