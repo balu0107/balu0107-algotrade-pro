@@ -1,0 +1,59 @@
+name: Environment Power Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Power Action'
+        required: true
+        default: 'stop'
+        type: choice
+        options:
+          - stop
+          - start
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  manage-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Get EC2 Instance IDs
+        id: get-instances
+        run: |
+          # Finds instances tagged with Name starting with k8s-
+          INSTANCE_IDS=$(aws ec2 describe-instances \
+            --region ap-south-1 \
+            --filters "Name=tag:Name,Values=k8s-master,k8s-worker*" "Name=instance-state-name,Values=running,stopped" \
+            --query "Reservations[*].Instances[*].InstanceId" \
+            --output text)
+          
+          echo "Found instances: $INSTANCE_IDS"
+          echo "instance_ids=$INSTANCE_IDS" >> $GITHUB_OUTPUT
+
+      - name: Stop Instances
+        if: github.event.inputs.action == 'stop' && steps.get-instances.outputs.instance_ids != ''
+        run: |
+          echo "Stopping instances..."
+          aws ec2 stop-instances --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
+          echo "Waiting for instances to stop..."
+          aws ec2 wait instance-stopped --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
+          echo "All instances are successfully stopped."
+
+      - name: Start Instances
+        if: github.event.inputs.action == 'start' && steps.get-instances.outputs.instance_ids != ''
+        run: |
+          echo "Starting instances..."
+          aws ec2 start-instances --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
+          echo "Waiting for instances to run..."
+          aws ec2 wait instance-running --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
+          echo "All instances are up and running!"
