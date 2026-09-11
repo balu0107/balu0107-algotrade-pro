@@ -30,12 +30,12 @@ jobs:
       - name: Get EC2 Instance IDs
         id: get-instances
         run: |
-          # Finds instances tagged with Name starting with k8s-
+          # Finds instances tagged with Name starting with k8s- and flattens output into a single line
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-south-1 \
-            --filters "Name=tag:Name,Values=k8s-master,k8s-worker*" "Name=instance-state-name,Values=running,stopped" \
+            --filters "Name=tag:Name,Values=k8s-master,k8s-worker*" "Name=instance-state-name,Values=running,stopped,pending,stopping" \
             --query "Reservations[*].Instances[*].InstanceId" \
-            --output text)
+            --output text | tr '\t\n' ' ' | xargs)
           
           echo "Found instances: $INSTANCE_IDS"
           echo "instance_ids=$INSTANCE_IDS" >> $GITHUB_OUTPUT
