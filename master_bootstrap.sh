@@ -8,12 +8,20 @@ if [ -n "$GODADDY_API_KEY" ] && [ -n "$GODADDY_API_SECRET" ] && [ -n "$GODADDY_D
   
   if [ -n "$PUBLIC_IP" ]; then
     echo "Updating GoDaddy A record: ${GODADDY_SUBDOMAIN}.${GODADDY_DOMAIN} -> ${PUBLIC_IP}"
-    curl -s -X PUT "https://api.godaddy.com/v1/domains/${GODADDY_DOMAIN}/records/A/${GODADDY_SUBDOMAIN}" \
+    HTTP_CODE=$(curl -s -o /tmp/godaddy_resp.txt -w "%{http_code}" -X PUT "https://api.godaddy.com/v1/domains/${GODADDY_DOMAIN}/records/A/${GODADDY_SUBDOMAIN}" \
          -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" \
          -H "Content-Type: application/json" \
-         -d '[{"data": "'$PUBLIC_IP'", "ttl": 600}]'
-    echo " GoDaddy DNS update payload sent successfully."
-    sleep 10
+         -d '[{"data": "'$PUBLIC_IP'", "ttl": 600}]')
+    
+    echo "GoDaddy API HTTP Status Code: $HTTP_CODE"
+    if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 204 ]; then
+      echo "GoDaddy DNS update payload sent successfully."
+      sleep 10
+    else
+      echo "Error updating GoDaddy DNS. Response:"
+      cat /tmp/godaddy_resp.txt
+      exit 1
+    fi
   else
     echo "Warning: Could not fetch public IP via ifconfig.me, skipping GoDaddy update."
   fi
@@ -131,7 +139,7 @@ sleep 15
 
 NGINX_PORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
 MASTER_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || hostname -I | awk '{print $1}')
-ACCESS_URL="http://${MASTER_IP}:${NGINX_PORT}"
+ACCESS_URL="http://app.trade2trade.in:${NGINX_PORT}"
 
 echo "============================================================"
 echo " NGINX NodePort successfully detected: ${NGINX_PORT}"
