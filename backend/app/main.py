@@ -53,7 +53,7 @@ async def catch_all_errors(request: Request, exc: Exception):
 # Parameterized CORS origins for cloud ingress and local development/testing flexibility
 env_origins = os.getenv("ALLOWED_ORIGINS", "*")
 origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
-safe_allow_credentials = "*" not in origins
+safe_allow_credentials = "*" not in origins and bool(origins)
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,10 +63,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(stocks.router)
-app.include_router(predictions.router)
-app.include_router(news.router)
-app.include_router(watchlist.router)
-app.include_router(alerts.router)
-app.include_router(ipos.router)
+# Prefix all routers with /api to match Nginx Ingress routing passthrough
+api_prefix = "/api"
+app.include_router(auth.router, prefix=api_prefix)
+app.include_router(stocks.router, prefix=api_prefix)
+app.include_router(predictions.router, prefix=api_prefix)
+app.include_router(news.router, prefix=api_prefix)
+app.include_router(watchlist.router, prefix=api_prefix)
+app.include_router(alerts.router, prefix=api_prefix)
+app.include_router(ipos.router, prefix=api_prefix)
