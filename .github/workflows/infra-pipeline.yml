@@ -154,7 +154,9 @@ jobs:
 
               - name: Download Kubernetes apt repository key
                 shell: |
-                  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+                  curl -fsSL --connect-timeout 10 --max-time 30 \
+                    https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key \
+                    | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
               - name: Add Kubernetes repository source
                 copy:
