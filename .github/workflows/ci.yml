@@ -221,15 +221,17 @@ jobs:
         id: read-ip
         run: |
           echo "Querying AWS EC2 for running master public IP..."
-          MASTER_IP=$(aws ec2 describe-instances \
+          RAW_IPS=$(aws ec2 describe-instances \
             --filters "Name=instance-state-name,Values=running" \
             --query "Reservations[*].Instances[*].PublicIpAddress" \
-            --output text | awk '{print $1}' | tr -d '\r\n')
+            --output text)
+          
+          MASTER_IP=$(echo "$RAW_IPS" | tr '\t' ' ' | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 | tr -d '\r\n')
           
           echo "DEBUG_MASTER_IP='$MASTER_IP'"
 
           if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
-            echo "Error: Could not retrieve running EC2 public IP."
+            echo "Error: Could not retrieve a valid running EC2 public IP."
             exit 1
           fi
 
