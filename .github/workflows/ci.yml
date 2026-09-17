@@ -210,9 +210,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -220,22 +217,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Get EC2 Master Public IP via Terraform or AWS CLI Fallback
+      - name: Get EC2 Master Public IP via Direct AWS CLI
         id: read-ip
         run: |
-          MASTER_IP=""
-          if [ -d "terraform" ]; then
-            cd terraform
-            MASTER_IP=$(terraform output -raw master_public_ip 2>/dev/null | tr -d '\r\n' || true)
-            cd ..
-          fi
+          echo "Querying AWS EC2 for running master public IP..."
+          MASTER_IP=$(aws ec2 describe-instances \
+            --filters "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text | awk '{print $1}' | tr -d '\r\n')
           
-          if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
-            MASTER_IP=$(aws ec2 describe-instances \
-              --filters "Name=instance-state-name,Values=running" \
-              --query "Reservations[*].Instances[*].PublicIpAddress" \
-              --output text | awk '{print $1}' | tr -d '\r\n')
-          fi
+          echo "DEBUG_MASTER_IP='$MASTER_IP'"
 
           if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
             echo "Error: Could not retrieve running EC2 public IP."
