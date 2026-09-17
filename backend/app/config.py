@@ -8,7 +8,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 _DEV_DATABASE_URL = "postgresql://postgres:superuser@db:5432/stockdemo"
 _DEV_SECRET_KEY = "my-awesome-demo-key-198107"
 
-DATABASE_URL = os.getenv("DATABASE_URL", _DEV_DATABASE_URL)[cite: 1]
+DATABASE_URL = os.getenv("DATABASE_URL", _DEV_DATABASE_URL)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 IPO_GURU_API_KEY = os.getenv("IPO_GURU_API_KEY", "")
