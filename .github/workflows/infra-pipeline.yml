@@ -45,22 +45,6 @@ jobs:
         run: terraform apply -auto-approve -lock=false
         working-directory: ./terraform
 
-      - name: Update Master IP File and Push
-        if: github.event.inputs.action == 'apply'
-        run: |
-          cd terraform
-          MASTER_IP=$(terraform output -raw master_public_ip)
-          cd ..
-          
-          echo "Extracted Master IP: $MASTER_IP"
-          echo "$MASTER_IP" > master_ip.txt
-          
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add master_ip.txt
-          git commit -m "chore: update master public ip to $MASTER_IP [skip ci]" || echo "No changes to commit"
-          git push || echo "Push skipped"
-
       - name: Wait for Cloud-Init and SSH Readiness
         if: github.event.inputs.action == 'apply'
         env:

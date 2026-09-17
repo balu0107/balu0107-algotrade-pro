@@ -79,17 +79,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Generate Version Tags & Read Master IP
+      - name: Generate Version Tags & Override Domain
         id: vars
         run: |
           echo "BUILD_DATE=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          if [ -f master_ip.txt ]; then
-            IP=$(cat master_ip.txt | tr -d ' \t\n\r')
-            echo "MASTER_IP=$IP" >> $GITHUB_ENV
-          else
-            echo "MASTER_IP=localhost" >> $GITHUB_ENV
-          fi
+          echo "app.trade2trade.in" > master_ip.txt
+          echo "MASTER_IP=app.trade2trade.in" >> $GITHUB_ENV
 
       - name: Build Docker Image
         uses: docker/build-push-action@v5
@@ -99,7 +95,7 @@ jobs:
           tags: maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
           build-args: |
-            NEXT_PUBLIC_API_URL=http://${{ env.MASTER_IP }}:30080/api
+            NEXT_PUBLIC_API_URL=http://app.trade2trade.in:30080/api
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
@@ -125,7 +121,7 @@ jobs:
             maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
             maruvadabalu/algotrade-pro-frontend:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=http://${{ env.MASTER_IP }}:30080/api
+            NEXT_PUBLIC_API_URL=http://app.trade2trade.in:30080/api
 
   build-bot:
     needs: build-frontend
@@ -214,12 +210,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Read Master IP from File
+      - name: Read Master IP from File / Domain Fallback
         id: read-ip
         run: |
-          MASTER_IP=$(cat master_ip.txt | tr -d ' \t\n\r')
-          echo "Using Master IP: $MASTER_IP"
-          echo "master_ip=$MASTER_IP" >> $GITHUB_OUTPUT
+          TARGET="app.trade2trade.in"
+          echo "Using Target: $TARGET"
+          echo "master_ip=$TARGET" >> $GITHUB_OUTPUT
 
       - name: Execute Master Bootstrap on EC2 via SSH
         uses: appleboy/ssh-action@master
@@ -227,7 +223,13 @@ jobs:
           host: ${{ steps.read-ip.outputs.master_ip }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: GODADDY_API_KEY,GODADDY_API_SECRET,GODADDY_DOMAIN,GODADDY_SUBDOMAIN
           script: |
+            export GODADDY_API_KEY="${{ secrets.GODADDY_API_KEY }}"
+            export GODADDY_API_SECRET="${{ secrets.GODADDY_API_SECRET }}"
+            export GODADDY_DOMAIN="${{ secrets.GODADDY_DOMAIN }}"
+            export GODADDY_SUBDOMAIN="${{ secrets.GODADDY_SUBDOMAIN }}"
+
             if [ ! -d "balu0107-algotrade-pro" ]; then
               git clone https://github.com/balu0107/balu0107-algotrade-pro.git
             fi

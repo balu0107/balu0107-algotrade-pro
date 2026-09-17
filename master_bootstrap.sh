@@ -1,6 +1,25 @@
 #!/bin/bash
 set -e
 
+# --- GoDaddy Dynamic DNS Auto-Update ---
+if [ -n "$GODADDY_API_KEY" ] && [ -n "$GODADDY_API_SECRET" ] && [ -n "$GODADDY_DOMAIN" ] && [ -n "$GODADDY_SUBDOMAIN" ]; then
+  echo "Fetching current public IP of EC2 instance..."
+  PUBLIC_IP=$(curl -s ifconfig.me)
+  
+  if [ -n "$PUBLIC_IP" ]; then
+    echo "Updating GoDaddy A record: ${GODADDY_SUBDOMAIN}.${GODADDY_DOMAIN} -> ${PUBLIC_IP}"
+    curl -s -X PUT "https://api.godaddy.com/v1/domains/${GODADDY_DOMAIN}/records/A/${GODADDY_SUBDOMAIN}" \
+         -H "Authorization: sso-key ${GODADDY_API_KEY}:${GODADDY_API_SECRET}" \
+         -H "Content-Type: application/json" \
+         -d '[{"data": "'$PUBLIC_IP'", "ttl": 600}]'
+    echo " GoDaddy DNS update payload sent successfully."
+    sleep 10
+  else
+    echo "Warning: Could not fetch public IP via ifconfig.me, skipping GoDaddy update."
+  fi
+fi
+# ----------------------------------------
+
 echo "=== 0. Syncing Repository State Safely ==="
 git fetch origin master
 git reset --hard origin/master
