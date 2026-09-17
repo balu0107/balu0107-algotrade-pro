@@ -1,7 +1,8 @@
 """Password hashing, JWT issuing/verification, and the current-user
 dependency every route depends on. Kept as one small top-level module
 (alongside config.py/database.py) rather than under api/ or services/,
-since it's a cross-cutting concern every api/*.py route file needs."""
+since it's a cross-cutting concern every api/*.py route file needs.
+"""
 import datetime
 
 import bcrypt
@@ -27,7 +28,7 @@ def get_password_hash(password):
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=60)
+    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=60)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM)
 
@@ -45,10 +46,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
 
 def seed_default_user():
-    """Creates the admin/admin account so it can be used without signing up.
-    Dev/demo convenience only - never runs when ENVIRONMENT=production, so a
-    real deployment never gets a default admin/admin account seeded into
-    whatever database it points to."""
+    """Creates the admin/admin account if it doesn't already exist so old data 
+    and the demo account remain safe. Dev/demo convenience only - never runs 
+    when ENVIRONMENT=production."""
     if config.ENVIRONMENT == "production":
         return
     from .database import SessionLocal

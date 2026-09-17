@@ -63,7 +63,20 @@ export default function SignupPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.detail ?? "Could not create account.");
+        let errorMsg = "Could not create account.";
+        if (data?.detail) {
+          if (typeof data.detail === "string") {
+            errorMsg = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            errorMsg = data
+              .detail
+              .map((err: any) => err.msg || JSON.stringify(err))
+              .join(", ");
+          } else {
+            errorMsg = JSON.stringify(data.detail);
+          }
+        }
+        throw new Error(errorMsg);
       }
 
       setSuccess(true);

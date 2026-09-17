@@ -4,6 +4,7 @@ logic lives here - every route delegates to services/, every route file
 lives under api/.
 """
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -49,10 +50,15 @@ async def catch_all_errors(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": f"THE REAL ERROR IS: {repr(exc)}"})
 
 
+# Parameterized CORS origins for cloud ingress and local development/testing flexibility
+env_origins = os.getenv("ALLOWED_ORIGINS", "*")
+origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
+safe_allow_credentials = "*" not in origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=safe_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
