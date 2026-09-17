@@ -99,7 +99,7 @@ jobs:
           tags: maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
           load: true
           build-args: |
-            NEXT_PUBLIC_API_URL=http://${{ env.MASTER_IP }}/api
+            NEXT_PUBLIC_API_URL=http://${{ env.MASTER_IP }}:30080/api
 
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
@@ -125,7 +125,7 @@ jobs:
             maruvadabalu/algotrade-pro-frontend:frontend-${{ env.BUILD_DATE }}-${{ env.SHORT_SHA }}
             maruvadabalu/algotrade-pro-frontend:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=http://${{ env.MASTER_IP }}/api
+            NEXT_PUBLIC_API_URL=http://${{ env.MASTER_IP }}:30080/api
 
   build-bot:
     needs: build-frontend
