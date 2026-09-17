@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Export KUBECONFIG for cluster tools
+export KUBECONFIG=/home/ubuntu/.kube/config
+if [ ! -f "$KUBECONFIG" ]; then
+  sudo cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+  sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
+fi
+
 # --- GoDaddy Dynamic DNS Auto-Update ---
 if [ -n "$GODADDY_API_KEY" ] && [ -n "$GODADDY_API_SECRET" ] && [ -n "$GODADDY_DOMAIN" ] && [ -n "$GODADDY_SUBDOMAIN" ]; then
   echo "Fetching current public IP of EC2 instance..."
