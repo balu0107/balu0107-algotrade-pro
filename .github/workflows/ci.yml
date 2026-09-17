@@ -210,12 +210,40 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Read Master IP from File / Domain Fallback
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Get EC2 Master Public IP via Terraform or AWS CLI Fallback
         id: read-ip
         run: |
-          TARGET="app.trade2trade.in"
-          echo "Using Target: $TARGET"
-          echo "master_ip=$TARGET" >> $GITHUB_OUTPUT
+          MASTER_IP=""
+          if [ -d "terraform" ]; then
+            cd terraform
+            MASTER_IP=$(terraform output -raw master_public_ip 2>/dev/null || true)
+            cd ..
+          fi
+          
+          if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
+            MASTER_IP=$(aws ec2 describe-instances \
+              --filters "Name=instance-state-name,Values=running" \
+              --query "Reservations[*].Instances[*].PublicIpAddress" \
+              --output text | awk '{print $1}')
+          fi
+
+          if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
+            echo "Error: Could not retrieve running EC2 public IP."
+            exit 1
+          fi
+
+          echo "Using Raw EC2 IP for SSH: $MASTER_IP"
+          echo "master_ip=$MASTER_IP" >> $GITHUB_OUTPUT
 
       - name: Execute Master Bootstrap on EC2 via SSH
         uses: appleboy/ssh-action@master
