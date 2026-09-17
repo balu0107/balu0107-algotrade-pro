@@ -226,7 +226,7 @@ jobs:
           MASTER_IP=""
           if [ -d "terraform" ]; then
             cd terraform
-            MASTER_IP=$(terraform output -raw master_public_ip 2>/dev/null || true)
+            MASTER_IP=$(terraform output -raw master_public_ip 2>/dev/null | tr -d '\r\n' || true)
             cd ..
           fi
           
@@ -234,7 +234,7 @@ jobs:
             MASTER_IP=$(aws ec2 describe-instances \
               --filters "Name=instance-state-name,Values=running" \
               --query "Reservations[*].Instances[*].PublicIpAddress" \
-              --output text | awk '{print $1}')
+              --output text | awk '{print $1}' | tr -d '\r\n')
           fi
 
           if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
@@ -250,6 +250,7 @@ jobs:
         with:
           host: ${{ steps.read-ip.outputs.master_ip }}
           username: ubuntu
+          port: 22
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: GODADDY_API_KEY,GODADDY_API_SECRET,GODADDY_DOMAIN,GODADDY_SUBDOMAIN
           script: |
