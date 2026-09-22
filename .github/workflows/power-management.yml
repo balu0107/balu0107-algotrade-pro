@@ -14,12 +14,16 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   manage-env:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        if: github.event.inputs.action == 'start'
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -30,7 +34,6 @@ jobs:
       - name: Get EC2 Instance IDs
         id: get-instances
         run: |
-          # Finds instances tagged with Name starting with k8s- and flattens output into a single line
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-south-1 \
             --filters "Name=tag:Name,Values=k8s-master,k8s-worker*" "Name=instance-state-name,Values=running,stopped,pending,stopping" \
@@ -45,15 +48,35 @@ jobs:
         run: |
           echo "Stopping instances..."
           aws ec2 stop-instances --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
-          echo "Waiting for instances to stop..."
           aws ec2 wait instance-stopped --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
           echo "All instances are successfully stopped."
 
-      - name: Start Instances
+      - name: Start Instances & Update Master IP
         if: github.event.inputs.action == 'start' && steps.get-instances.outputs.instance_ids != ''
         run: |
           echo "Starting instances..."
           aws ec2 start-instances --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
-          echo "Waiting for instances to run..."
           aws ec2 wait instance-running --instance-ids ${{ steps.get-instances.outputs.instance_ids }} --region ap-south-1
           echo "All instances are up and running!"
+
+          echo "Fetching master node public IP..."
+          MASTER_IP=$(aws ec2 describe-instances \
+            --region ap-south-1 \
+            --filters "Name=tag:Name,Values=k8s-master" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+
+          if [ -z "$MASTER_IP" ] || [ "$MASTER_IP" == "None" ]; then
+            echo "ERROR: Could not retrieve master public IP."
+            exit 1
+          fi
+
+          echo "New Master IP: $MASTER_IP"
+          echo "$MASTER_IP" > master_ip.txt
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin master || true
+          git add master_ip.txt
+          git commit -m "chore: auto-sync master ip to $MASTER_IP [skip ci]" || echo "No changes to commit"
+          git push origin master

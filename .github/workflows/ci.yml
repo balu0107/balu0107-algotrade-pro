@@ -217,7 +217,11 @@ jobs:
       - name: Read Master IP from File
         id: read-ip
         run: |
-          MASTER_IP=$(cat master_ip.txt | tr -d ' \t\n\r')
+          if [ -f master_ip.txt ]; then
+            MASTER_IP=$(cat master_ip.txt | tr -d ' \t\n\r')
+          else
+            MASTER_IP="13.201.174.64"
+          fi
           echo "Using Master IP: $MASTER_IP"
           echo "master_ip=$MASTER_IP" >> $GITHUB_OUTPUT
 
@@ -237,3 +241,4 @@ jobs:
             chmod +x master_bootstrap.sh
             ./master_bootstrap.sh
             cat /var/log/algotrade/access-url.log
+            curl -I http://localhost:30080/
