@@ -63,8 +63,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Prefix all routers with /api to match Nginx Ingress routing passthrough
-api_prefix = "/api"
+# Clearing extra prefix since router definitions in api/ already include /api paths
+api_prefix = ""
 app.include_router(auth.router, prefix=api_prefix)
 app.include_router(stocks.router, prefix=api_prefix)
 app.include_router(predictions.router, prefix=api_prefix)
