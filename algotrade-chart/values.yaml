@@ -37,6 +37,17 @@ bot:
     port: 8080
     targetPort: 8080
 
+db:
+  replicaCount: 1
+  image:
+    repository: postgres
+    pullPolicy: IfNotPresent
+    tag: "18-alpine"
+  service:
+    type: ClusterIP
+    port: 5432
+    targetPort: 5432
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

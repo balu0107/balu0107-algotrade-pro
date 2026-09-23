@@ -22,19 +22,37 @@ spec:
           image: "{{ $val.image.repository }}:{{ $val.image.tag }}"
           imagePullPolicy: {{ $val.image.pullPolicy }}
           ports:
-            - containerPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else }}3000{{ end }}
+            - containerPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else if eq $key "db" }}5432{{ else }}3000{{ end }}
+          {{- if eq $key "db" }}
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "superuser"
+            - name: POSTGRES_DB
+              value: "stockdemo"
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          {{- end }}
+      {{- if eq $key "db" }}
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "algotrade-chart.fullname" $ }}-{{ $key }}
+  name: {{ include "algotrade-chart.fullname" $ }}-valid-{{ $key }}
   labels:
     app.kubernetes.io/name: {{ $key }}
 spec:
   type: {{ $val.service.type }}
   ports:
     - port: {{ $val.service.port }}
-      targetPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else }}3000{{ end }}
+      targetPort: {{ if eq $key "backend" }}{{ $val.service.port }}{{ else if eq $key "bot" }}8080{{ else if eq $key "db" }}5432{{ else }}3000{{ end }}
       protocol: TCP
       name: http
   selector:
