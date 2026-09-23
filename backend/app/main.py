@@ -64,7 +64,7 @@ app.add_middleware(
 )
 
 # Clearing extra prefix since router definitions in api/ already include /api paths
-api_prefix = ""
+api_prefix = "/api"
 app.include_router(auth.router, prefix=api_prefix)
 app.include_router(stocks.router, prefix=api_prefix)
 app.include_router(predictions.router, prefix=api_prefix)
