@@ -42,7 +42,7 @@ db:
   image:
     repository: postgres
     pullPolicy: IfNotPresent
-    tag: "18-alpine"
+    tag: "16-alpine"
   service:
     type: ClusterIP
     port: 5432
